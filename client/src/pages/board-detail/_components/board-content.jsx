@@ -1,5 +1,4 @@
 import { Button } from "@/components/ui/button";
-import { changeOrderColumn, getBoards } from "@/lib/dump";
 import AddListForm from "@/pages/board-detail/_components/add-list-form";
 import List from "@/pages/board-detail/_components/list";
 import { SlidersHorizontal, Star, UserPlus, Users } from "lucide-react";
@@ -15,9 +14,11 @@ import {
 import {
   SortableContext,
   horizontalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import Card from "@/pages/board-detail/_components/card";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { listApi } from "@/apis/list.api";
+import { cardApi } from "@/apis/card.api";
 
 const ACTIVE_DRAG_ITEM_TYPE = {
   COLUMN: "ACTIVE_DRAG_ITEM_TYPE_COLUMN",
@@ -26,10 +27,39 @@ const ACTIVE_DRAG_ITEM_TYPE = {
 
 const BoardContent = () => {
   const { boardId } = useParams();
-  const [board, setBoard] = useState(null);
   const [activeDragItemId, setActiveDragItemId] = useState(null);
   const [activeItemDragType, setActiveItemDragType] = useState(null);
   const [activeItemDragData, setActiveItemDragData] = useState(null);
+
+  const [list, setList] = useState([])
+  const [card, setCard] = useState([])
+
+  const changeListOrder = useMutation({
+    mutationFn: (data) => listApi.changeOrder(data),
+  });
+
+  const changeCardOrder = useMutation({
+    mutationFn: (data) => cardApi.changeOrderCard(data),
+  });
+
+  const { data } = useQuery({
+    queryKey: ["list"],
+    queryFn: () => listApi.getAllLists(boardId),
+  })
+
+  const { data: dataCard } = useQuery({
+    queryKey: ["card"],
+    queryFn: () => cardApi.getAll(boardId),
+  })
+
+  useEffect(() => {
+    setList(data?.data?.result || [])
+  }, [data])
+
+  useEffect(() => {
+    setCard(dataCard?.data?.result || [])
+  }, [dataCard])
+  
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -38,11 +68,6 @@ const BoardContent = () => {
       },
     })
   );
-
-  useEffect(() => {
-    const newBoard = getBoards().find((board) => board.id == boardId);
-    setBoard(newBoard);
-  }, [boardId]);
 
   const handleDragEnd = (event) => {
     const { active, over } = event;
@@ -53,74 +78,59 @@ const BoardContent = () => {
       activeDragItemId &&
       activeItemDragType === ACTIVE_DRAG_ITEM_TYPE.COLUMN
     ) {
-      const oldIndex = board?.list?.findIndex((list) => list.id == active.id);
-      const newIndex = board?.list?.findIndex((list) => list.id == over.id);
-      const newList = arrayMove(board.list, oldIndex, newIndex);
-      setBoard({ ...board, list: newList });
-      changeOrderColumn(boardId, newList);
+      const newList = [...list];
+      const oldIndex = list?.findIndex((list) => list.id == active.id);
+      const newIndex = list?.findIndex((list) => list.id == over.id);
+      const oldPos = list[oldIndex].pos;
+      const newPos = list[newIndex].pos;
+      newList[oldIndex].pos = newPos;
+      newList[newIndex].pos = oldPos;
+      
+      setList(newList);
+      changeListOrder.mutate({ activeId: active.id, overId: over.id });
     }
 
     if (activeDragItemId && activeItemDragType === ACTIVE_DRAG_ITEM_TYPE.CARD) {
-      const oldColumnId = String(active?.id).split("-")[1];
-      const newColumnId = String(over?.id).includes("card") ? String(over?.data?.current?.id).split("-")[1] : String(over?.id);
+      const oldColumnId = active?.data?.current?.list_id
+      const newColumnId = over?.data?.current?.list_id ? over?.data?.current?.list_id : over?.data?.current?.id
+      changeCardOrder.mutate({
+        activeId: activeDragItemId,
+        overId: over?.data?.current?.list_id ? over?.data?.current?.id : null,
+        oldListId: oldColumnId,
+        newListId: newColumnId
+      })
       if(oldColumnId === newColumnId){
-        const currentColum = board?.list?.find((list) => list.id == oldColumnId);
-        const listCard = currentColum?.card;
-        const indexOldCard = listCard?.findIndex((card) => card.id == activeDragItemId);
-        const indexNewCard = listCard?.findIndex((card) => card.id == over?.data?.current?.id);
-        const element = listCard.splice(indexOldCard, 1)[0];
-        listCard.splice(indexNewCard, 0, element);
-        currentColum.card = listCard;
-        const newList = board?.list?.map((list) => {
-          if(list.id == oldColumnId){
-            return currentColum
-          }
-          return list
-        })
-        setBoard({ ...board, list: newList });
-      }
-      if(oldColumnId !== newColumnId){
-        const currentColum = board?.list?.find((list) => list.id == oldColumnId);
-        const listCard = currentColum?.card;
-        const indexOldCard = listCard?.findIndex((card) => card.id == activeDragItemId);
-        const element = listCard.splice(indexOldCard, 1)[0];
-        const newColumn = board?.list?.find((list) => list.id == newColumnId);
-        const newListCard = newColumn?.card;
-        if(String(over?.id).includes("card")){
-          const indexNewCard = newListCard?.findIndex((card) => card.id == over?.data?.current?.id);
-          newListCard.splice(indexNewCard, 0, {...element, id: `card-${newColumnId}-${newListCard.length + 1}`});
-          newColumn.card = newListCard;
-          currentColum.card = listCard;
-          const newList = board?.list?.map((list) => {
-            if(list.id == oldColumnId){
-              return currentColum
-            }
-            if(list.id == newColumnId){
-              return newColumn
-            }
-            return list
-          })
-          setBoard({ ...board, list: newList });
+        const newCard = [...card];
+        const oldCardIndex = card?.findIndex((card) => card.id == activeDragItemId);
+        const newCardIndex = card?.findIndex((card) => card.id == over?.data?.current?.id);
+        const oldCardPos = card[oldCardIndex].pos;
+        const newCardPos = card[newCardIndex].pos;
+        if(oldCardPos < newCardPos){
+          newCard[oldCardIndex].pos = newCardPos + 1;
         }
-        if(!String(over?.id).includes("card")){
-          console.log("newColumnId", newColumnId);
-          console.log("newColumn", newColumn);
-          console.log("newListCard", newListCard);
-          newListCard.push({...element, id: `card-${newColumnId}-${newListCard.length + 1}`});
-          newColumn.card = newListCard;
-          currentColum.card = listCard;
-          const newList = board?.list?.map((list) => {
-            if(list.id == oldColumnId){
-              return currentColum
-            }
-            if(list.id == newColumnId){
-              return newColumn
-            }
-            return list
-          })
-          setBoard({ ...board, list: newList });
+        if(oldCardPos > newCardPos){
+          newCard[oldCardIndex].pos = newCardPos - 1;
         }
+        setCard(newCard);
       }
+      const lengthNewCard = card?.filter((card) => card?.list_id == newColumnId).length
+     if(oldColumnId !== newColumnId && lengthNewCard === 0){
+      const newCard = [...card];
+      const oldCardIndex = card?.findIndex((card) => card.id == activeDragItemId);
+      newCard[oldCardIndex].list_id = newColumnId
+      newCard[oldCardIndex].pos = 10000
+      setCard(newCard);
+     }
+     if(oldColumnId !== newColumnId && lengthNewCard > 0){
+      const newCard = [...card];
+      const oldCardIndex = card?.findIndex((card) => card.id == activeDragItemId);
+      const newCardIndex = card?.findIndex((card) => card.id == over?.data?.current?.id);
+      const newCardPos = card[newCardIndex].pos;
+      newCard[oldCardIndex].list_id = newColumnId
+      newCard[oldCardIndex].pos = newCardPos - 1
+      newCard[newCardIndex].pos = newCardPos + 1
+      setCard(newCard);
+     }
 
 
     }
@@ -134,7 +144,7 @@ const BoardContent = () => {
     console.log("event start", event);
     setActiveDragItemId(event?.active?.id);
     setActiveItemDragType(
-      String(event?.active?.data?.current?.id)?.includes("card")
+      event?.active?.data?.current?.list_id
         ? ACTIVE_DRAG_ITEM_TYPE.CARD
         : ACTIVE_DRAG_ITEM_TYPE.COLUMN
     );
@@ -145,7 +155,7 @@ const BoardContent = () => {
     <>
       <div className="px-4 py-3 w-full border-b bg-blue-200 flex justify-between items-center">
         <div className="flex items-center gap-4">
-          <h3>{board?.title}</h3>
+          {/* <h3>{board?.title}</h3> */}
           <Star className="w-4 h-4" />
           <Users className="w-4 h-4" />
         </div>
@@ -170,7 +180,7 @@ const BoardContent = () => {
           {(!activeDragItemId || !activeItemDragType) && null}
           {activeDragItemId &&
             activeItemDragType === ACTIVE_DRAG_ITEM_TYPE.COLUMN && (
-              <List list={activeItemDragData} />
+              <List list={activeItemDragData} cards={card.filter((card) => card.list_id == activeItemDragData?.id)} />
             )}
           {activeDragItemId &&
             activeItemDragType === ACTIVE_DRAG_ITEM_TYPE.CARD && (
@@ -180,21 +190,22 @@ const BoardContent = () => {
         <div className="relative">
           <SortableContext
             strategy={horizontalListSortingStrategy}
-            items={board?.list?.map((list) => list.id) || []}
+            items={list?.map((list) => list.id) || []}
           >
             <div
               style={{ height: "calc(100vh - 64px)" }}
               className="w-full p-4 top-0 left-0 absolute bg-blue-100 flex gap-4 overflow-hidden overflow-x-auto"
             >
-              {board?.list?.map((list) => (
+              {list.sort((a, b) => a.pos - b.pos)?.map((list) => (
                 <List
                   key={list.id}
                   list={list}
-                  setBoard={setBoard}
-                  board={board}
+                  boardId={boardId}
+                  cards = {card.filter(card => card.list_id == list.id)}
+                  setCard={setCard}
                 />
               ))}
-              <AddListForm board={board} setBoard={setBoard} />
+              <AddListForm boardId={boardId} setList={setList} />
             </div>
           </SortableContext>
         </div>

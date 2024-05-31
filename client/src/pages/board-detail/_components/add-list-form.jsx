@@ -1,20 +1,29 @@
 /* eslint-disable react/prop-types */
+import { listApi } from "@/apis/list.api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createList } from "@/lib/dump";
 import { cn } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";
 
-const AddListForm = ({ setBoard, board }) => {
+const AddListForm = ({ setList, boardId }) => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("")
+
+  const createListMutation = useMutation({
+    mutationFn: (data) => listApi.createList(data),
+    onSuccess: (data) => {
+      setList((prev) => [...prev, data?.data?.result])
+      setOpen(false)
+      setTitle("")
+    }
+  })
   const handleAddList = () => {
-    const newData = createList(board.id, {name: title});
-    console.log(newData);
-    setBoard(newData)
-    setOpen(false)
-    setTitle("")
+    createListMutation.mutate({
+      name: title,
+      board_id: boardId
+    })
   }
   return (
     <>

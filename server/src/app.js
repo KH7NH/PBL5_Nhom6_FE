@@ -6,6 +6,8 @@ const helmet = require('helmet')
 const morgan = require('morgan')
 const compression = require('compression')
 const cors = require('cors');
+const passport = require('passport');
+const { jwtStrategy } = require('./config/passport');
 
 //user middleware
 app.use(helmet())
@@ -14,6 +16,10 @@ app.use(morgan('combined'))
 app.use(compression())
 // enable cors
 app.use(cors())
+
+// jwt authentication
+app.use(passport.initialize());
+passport.use('jwt', jwtStrategy);
 
 // add body-parser
 app.use(express.json())

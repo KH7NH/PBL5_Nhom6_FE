@@ -1,5 +1,7 @@
 import Logo from "@/assets/logo.png";
 import path from "@/constants/path";
+import { AppContext } from "@/contexts/app.context";
+import { useContext } from "react";
 import { Link } from "react-router-dom";
 
 const menuItems = [
@@ -18,6 +20,7 @@ const menuItems = [
 ];
 
 const Header = () => {
+  const {isAuthenticated} = useContext(AppContext);
   return (
     <div className="header px-2 flex items-center bg-white shadow-md h-16 fixed top-0 left-0 right-0 w-full z-10">
       <Link className="py-3 px-8" to={path.home}>
@@ -43,7 +46,8 @@ const Header = () => {
         ))}
       </div>
       <div className="flex items-stretch ml-auto h-full">
-        <Link
+        {
+          !isAuthenticated && <><Link
           to={path.login}
           className="text-lg text-slate-800 py-5 px-6 h-full cursor-pointer"
         >
@@ -54,7 +58,17 @@ const Header = () => {
           className="text-lg text-slate-50 py-5 px-6 h-full cursor-pointer bg-blue-600 hover:bg-blue-800"
         >
           Đăng ký
-        </Link>
+        </Link></>
+        }
+        {
+          isAuthenticated && <><Link
+          to={path.boards}
+          className="text-lg text-slate-50 py-5 px-6 h-full cursor-pointer bg-blue-600 hover:bg-blue-800"
+        >
+          Dashboard
+        </Link></>
+        }
+        
       </div>
     </div>
   );

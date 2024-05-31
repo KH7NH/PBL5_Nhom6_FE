@@ -1,20 +1,22 @@
+import { boardApi } from "@/apis/board.api";
 import { CreateBoard } from "@/components/create-board";
 import MainHeader from "@/components/main-header";
 import { SideBar } from "@/components/side-bar";
 import { Button } from "@/components/ui/button";
 import path from "@/constants/path";
-import { getBoards } from "@/lib/dump";
+import { useQuery } from "@tanstack/react-query";
 import { Clock9, Columns3, LayoutGrid, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 
 const BoardsPage = () => {
-  const [boards, setBoards] = useState(getBoards());
   const [open, setOpen] = useState(false);
-  useEffect(() => {
-    setBoards(getBoards())
-  }, [open])
-  
+  const { data } = useQuery({
+    queryKey: ["boards"],
+    queryFn: () => boardApi.getAllBoards(),
+  });
+  const boards = data?.data?.result || [];
+
   return (
     <>
       <MainHeader setOpen={setOpen} />
@@ -85,17 +87,21 @@ const BoardsPage = () => {
               </div>
               <div className="w-full flex flex-wrap gap-4 mt-2">
                 {boards.map((board) => (
-                  <Link to={`${path.boards}/${board.id}`}
-                    key={board.title}
+                  <Link
+                    to={`${path.boards}/${board.id}`}
+                    key={board.id}
                     className="w-[23.5%] p-2 rounded-sm h-28 bg-pink-700 cursor-pointer"
                   >
                     <span className="text-white font-semibold text-lg">
-                      {board.title}
+                      {board.name}
                     </span>
                   </Link>
                 ))}
 
-                <div onClick={() => setOpen(true)} className="w-[23.5%] p-2 rounded-sm h-28 bg-slate-200 flex justify-center items-center text-center">
+                <div
+                  onClick={() => setOpen(true)}
+                  className="w-[23.5%] p-2 rounded-sm h-28 bg-slate-200 flex justify-center items-center text-center"
+                >
                   <span className="text-slate-600">Tạo bảng mới</span>
                 </div>
               </div>

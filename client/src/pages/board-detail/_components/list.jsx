@@ -1,7 +1,6 @@
 /* eslint-disable react/prop-types */
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createCard } from "@/lib/dump";
 import { Ellipsis, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
@@ -11,16 +10,27 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import Card from "@/pages/board-detail/_components/card";
+import { useMutation } from "@tanstack/react-query";
+import { cardApi } from "@/apis/card.api";
 
-const List = ({ list, setBoard, board }) => {
+const List = ({ list, boardId, cards, setCard }) => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
 
+  const createCardMutation = useMutation({
+    mutationFn: (data) => cardApi.create(data),
+    onSuccess: (data) => {
+      setCard((prev) => [...prev, data.data?.result]);
+      setOpen(false);
+      setTitle("");
+  }})
+
   const handleAddCard = () => {
-    const newData = createCard(board.id, list.id, { name: title });
-    setBoard(newData);
-    setOpen(false);
-    setTitle("");
+    createCardMutation.mutate({
+      name: title,
+      list_id: list.id,
+      board_id: boardId
+    })
   };
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
@@ -46,13 +56,15 @@ const List = ({ list, setBoard, board }) => {
       </div>
       <SortableContext
         strategy={verticalListSortingStrategy}
-        items={list?.card?.map((card) => `${card.id}`) || []}
+        items={cards?.map((card) => `${card?.id}`) || []}
       >
         <div className="flex flex-col gap-2 mt-4">
-          {list?.card?.map((card) => (
+          {cards && cards.length > 0 && cards.sort((a, b) => a?.pos - b?.pos).map((card) => (
             <Card key={card.id} card={card} />
           ))}
-          {!open && (
+        </div>
+      </SortableContext>
+      {!open && (
             <div
               onClick={() => setOpen(true)}
               className="w-full p-2 text-sm bg-slate-50 flex items-center gap-4 cursor-pointer"
@@ -80,8 +92,6 @@ const List = ({ list, setBoard, board }) => {
               </div>
             </div>
           )}
-        </div>
-      </SortableContext>
     </div>
   );
 };

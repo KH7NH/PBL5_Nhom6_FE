@@ -3,6 +3,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 /* eslint-disable react/prop-types */
 const Card = ({ card }) => {
+
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: card.id, data: {...card} });
 
