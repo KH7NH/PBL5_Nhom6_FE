@@ -6,5 +6,8 @@ export const boardApi = {
     },
     getAllBoards: () => {
         return http.get("/board")
+    },
+    getAllBoardsShared: () => {
+        return http.get("/board/shared")
     }
 }

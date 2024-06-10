@@ -5,5 +5,6 @@ const router = express.Router();
 
 router.post('/', auth(), boardController.createBoard);
 router.get('/', auth(), boardController.getAllBoards);
+router.get('/shared', auth(), boardController.getAllBoardShared);
 
 module.exports = router

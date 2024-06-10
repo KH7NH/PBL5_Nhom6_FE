@@ -37,7 +37,7 @@ const cardController = {
         if(oldCard[0].pos > newCard[0].pos){
             await pool.query('UPDATE card SET pos = ? WHERE id = ?', [newCard[0].pos - 1, activeId]);
         }
-        res.status(200).json({ 
+        return res.status(200).json({ 
             status: 'success',
             data: "ok"
          });
@@ -45,7 +45,7 @@ const cardController = {
        const [newList] = await pool.query('SELECT * FROM card WHERE list_id = ?', [newListId]);
        if(oldListId !== newListId && newList.length === 0){
         await pool.query('UPDATE card SET pos = ?, list_id = ? WHERE id = ?', [ 10000, newListId , activeId]);
-        res.status(200).json({ 
+        return res.status(200).json({ 
             status: 'success',
             data: "ok"
          });
@@ -55,13 +55,16 @@ const cardController = {
         const newCardPos = newCard[0][0].pos;
         await pool.query('UPDATE card SET pos = ?, list_id = ? WHERE id = ?', [newCardPos - 1,newListId, activeId]);
         await pool.query('UPDATE card SET pos = ? WHERE id = ?', [newCardPos + 1, overId]);
-        res.status(200).json({ 
+        return res.status(200).json({ 
             status: 'success',
             data: "ok"
          });
        }
 
-
+       return res.status(200).json({
+           status: 'success',
+           data: "ok"
+       })
    }
 };
 

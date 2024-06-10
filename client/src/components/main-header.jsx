@@ -6,9 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Bell, User } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useContext } from "react";
+import { useContext, useMemo } from "react";
 import { AppContext } from "@/contexts/app.context";
 import { clearLS } from "@/utils/auth";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { useQuery } from "@tanstack/react-query";
+import { notifyApi } from "@/apis/notify.api";
 
 const menuItems = [
   {
@@ -25,12 +32,18 @@ const menuItems = [
   },
 ];
 
-const MainHeader = ({setOpen = () => {}}) => {
-  const {reset} = useContext(AppContext)
+const MainHeader = ({ setOpen = () => {} }) => {
+  const { reset } = useContext(AppContext);
+  const { data } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: () => notifyApi.getListNotify(),
+  });
+
+  const notify = useMemo(() => data?.data?.result || [], [data]);
   const handleLogout = () => {
-    reset()
-    clearLS()
-  }
+    reset();
+    clearLS();
+  };
   return (
     <div className="header px-2 flex items-center bg-white shadow-md h-16 w-full z-10">
       <Link className="py-3 px-8" to={path.home}>
@@ -54,15 +67,38 @@ const MainHeader = ({setOpen = () => {}}) => {
             </button>
           </Link>
         ))}
-        <Button onClick={() => setOpen(true)} variant="main" className="ml-4">Tạo mới</Button>
+        <Button onClick={() => setOpen(true)} variant="main" className="ml-4">
+          Tạo mới
+        </Button>
       </div>
       <div className="flex items-center ml-auto h-full gap-4">
         <Input placeholder="Tìm kiếm" />
-        <Bell className="w-10 h-10" />
+        <Popover>
+          <PopoverTrigger className="relative">
+            <Bell />
+            <span className="w-2 h-2 bg-red-500 rounded-full absolute right-0 top-0"></span>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 h-80 overflow-y-scroll p-2 flex flex-col gap-2">
+            {!notify || (notify.length === 0 && <div className="w-full h-full flex justify-center items-center text-center"><p>Không có thông báo</p></div>)}
+            {notify &&
+              notify.length > 0 &&
+              notify.map((item) => (
+                <div key={item.id} className="p-2 bg-slate-100 rounded">
+                  <b>{item.title}</b>
+                  <p>{item.content}</p>
+                </div>
+              ))}
+          </PopoverContent>
+        </Popover>
+
         <Avatar>
-          <AvatarFallback><User className="w-6 h-6" /></AvatarFallback>
+          <AvatarFallback>
+            <User className="w-6 h-6" />
+          </AvatarFallback>
         </Avatar>
-        <Button onClick={handleLogout} variant="outline">Đăng xuất</Button>
+        <Button onClick={handleLogout} variant="outline">
+          Đăng xuất
+        </Button>
       </div>
     </div>
   );

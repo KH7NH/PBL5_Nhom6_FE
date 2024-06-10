@@ -5,8 +5,8 @@ import { SideBar } from "@/components/side-bar";
 import { Button } from "@/components/ui/button";
 import path from "@/constants/path";
 import { useQuery } from "@tanstack/react-query";
-import { Clock9, Columns3, LayoutGrid, Users } from "lucide-react";
-import { useState } from "react";
+import { Columns3, LayoutGrid, Users } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 
 const BoardsPage = () => {
@@ -15,7 +15,16 @@ const BoardsPage = () => {
     queryKey: ["boards"],
     queryFn: () => boardApi.getAllBoards(),
   });
+
+  const { data: dataBoardShared } = useQuery({
+    queryKey: ["boards-shared"],
+    queryFn: () => boardApi.getAllBoardsShared(),
+  });
   const boards = data?.data?.result || [];
+
+  const boardShared = useMemo(() => {
+    return dataBoardShared?.data?.result || [];
+  }, [dataBoardShared]);
 
   return (
     <>
@@ -24,25 +33,31 @@ const BoardsPage = () => {
         <SideBar />
         <div className="w-full mt-10 mx-4">
           <div>
-            <div className="pb-5">
-              <div className="flex items-center gap-2">
-                <Clock9 className="w-6 h-6" />
-                <span className="font-medium">Gần đây</span>
-              </div>
-              <div className="w-full flex flex-wrap gap-4 mt-2">
-                <div
-                  style={{
-                    backgroundImage:
-                      "url(https://trello-backgrounds.s3.amazonaws.com/SharedBackground/480x300/95020ee27beb21fb11c7b3ad5ad8b307/photo-1706820643404-71812d9d7d3a.jpg)",
-                  }}
-                  className="w-[23.5%] p-2 rounded-sm h-28 bg-cover mb-5"
-                >
-                  <span className="text-white font-semibold text-lg">
-                    Project 1
-                  </span>
+            {boardShared && boardShared.length > 0 && (
+              <div className="pb-5">
+                <div className="flex items-center gap-2">
+                  <span className="font-medium">Được chia sẻ</span>
+                </div>
+                <div className="w-full flex flex-wrap gap-4 mt-2">
+                  {boardShared.map((board) => (
+                    <Link
+                      to={`${path.boards}/${board.id}`}
+                      key={board.id}
+                      style={{
+                        backgroundImage:
+                          "url(https://trello-backgrounds.s3.amazonaws.com/SharedBackground/480x336/24baa6609b89fb8eb0cc0aceb70eaf36/photo-1557682250-33bd709cbe85.jpg)",
+                      }}
+                      className="w-[23.5%] p-2 rounded-sm h-28 bg-cover mb-5"
+                    >
+                      <span className="text-white font-semibold text-lg">
+                        {board.name}
+                      </span>
+                    </Link>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
+
             <div className="pb-5">
               <div className="flex items-center gap-2">
                 <span className="font-medium uppercase">

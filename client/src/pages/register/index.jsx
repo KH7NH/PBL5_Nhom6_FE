@@ -84,6 +84,7 @@ const RegisterPage = () => {
       setIsAuthenticated(true);
       toast.success("Đăng ký thành công");
       form.reset();
+      location.reload();
     },
   });
 

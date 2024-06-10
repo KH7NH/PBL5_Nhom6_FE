@@ -42,6 +42,7 @@ const LoginPage = () => {
       setIsAuthenticated(true);
       toast.success("Đăng nhập thành công");
       form.reset();
+      location.reload();
     },
   });
 

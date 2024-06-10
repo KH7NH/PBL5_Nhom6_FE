@@ -75,10 +75,6 @@ export function CreateBoard({ open, setOpen }) {
                 </FormItem>
               )}
             />
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">Thành viên</Label>
-              <Input id="title" className="col-span-3" />
-            </div>
             <FormField
               control={form.control}
               name="description"
