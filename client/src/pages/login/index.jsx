@@ -17,7 +17,7 @@ import { AppContext } from "@/contexts/app.context";
 import { useContext } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { authApi } from "@/apis/auth.api";
-import { setAccessTokenToLS } from "@/utils/auth";
+import { setAccessTokenToLS, setProfileToLS } from "@/utils/auth";
 import { toast } from "sonner";
 
 const formSchema = z.object({
@@ -26,7 +26,7 @@ const formSchema = z.object({
 });
 
 const LoginPage = () => {
-  const { setIsAuthenticated, setToken } = useContext(AppContext);
+  const { setIsAuthenticated, setToken, setProfile } = useContext(AppContext);
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -39,6 +39,8 @@ const LoginPage = () => {
     onSuccess: (data) => {
       setAccessTokenToLS(data?.data?.token);
       setToken(data?.data?.token);
+      setProfile(data?.data?.result);
+      setProfileToLS(data?.data?.result);
       setIsAuthenticated(true);
       toast.success("Đăng nhập thành công");
       form.reset();

@@ -34,6 +34,14 @@ const listController = {
             status: 'success',
             data: "ok"
          });
+    },
+    deleteList: async (req, res) => {
+        const { id } = req.params;
+        const [result] = await pool.query('DELETE FROM list WHERE id = ?', [id]);
+        res.status(200).json({ 
+            status: 'success',
+            data: "ok"
+         });
     }
 }
 

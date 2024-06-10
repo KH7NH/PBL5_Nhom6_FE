@@ -42,6 +42,9 @@ const BoardContent = () => {
 
   const changeCardOrder = useMutation({
     mutationFn: (data) => cardApi.changeOrderCard(data),
+    onSuccess: () => {
+      refetch()
+    }
   });
 
   const { data } = useQuery({
@@ -49,7 +52,7 @@ const BoardContent = () => {
     queryFn: () => listApi.getAllLists(boardId),
   });
 
-  const { data: dataCard } = useQuery({
+  const { data: dataCard, refetch } = useQuery({
     queryKey: ["card"],
     queryFn: () => cardApi.getAll(boardId),
   });

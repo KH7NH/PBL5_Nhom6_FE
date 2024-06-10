@@ -8,6 +8,7 @@ const compression = require('compression')
 const cors = require('cors');
 const passport = require('passport');
 const { jwtStrategy } = require('./config/passport');
+const fs = require('fs');
 
 //user middleware
 app.use(helmet())
@@ -27,6 +28,16 @@ app.use(express.urlencoded({
     extended: true
 }))
 
+// app.use('/uploads', express.static('uploads'));
+app.get('/uploads/:name', (req, res) => {
+  // Get the image file
+  const imageFile = fs.readFileSync(`uploads/${req.params.name}`);
+
+  const base64Image = new Buffer.from(imageFile).toString(
+    "base64"
+  );
+  res.send("data:image/jpeg;base64," + base64Image);
+});
 // Routes
 app.use('/api/v1', routes);
 

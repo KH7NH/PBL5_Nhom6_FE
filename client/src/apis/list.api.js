@@ -9,5 +9,8 @@ export const listApi = {
     },
     changeOrder: (body) => {
         return http.patch("/list/order", body)
+    },
+    deleteList: (id) => {
+        return http.delete("/list/" + id)
     }
 }

@@ -8,4 +8,6 @@ router.post('/', auth(), listController.createList)
 
 router.patch('/order', auth(), listController.changeOrder)
 
+router.delete('/:id', auth(), listController.deleteList)
+
 module.exports = router

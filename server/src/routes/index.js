@@ -10,5 +10,8 @@ router.use('/card', require('./card.route'));
 router.use('/member', require('./member.route'));
 router.use('/user', require('./user.route'));
 router.use('/notify', require('./notify.route'));
+router.use('/upload', require('./upload.route'));
+router.use('/comment', require('./comment.route'));
+
 
 module.exports = router;

@@ -9,5 +9,11 @@ export const cardApi = {
     },
     changeOrderCard: (data) => {
         return http.patch("/card/order", data);
+    },
+    updateCard: (id, data) => {
+        return http.patch("/card/" + id, data);
+    },
+    deleteCard: (id) => {
+        return http.delete("/card/" + id);
     }
 }
